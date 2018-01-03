@@ -61,6 +61,7 @@ public class TraceServiceImpl implements TraceService {
 		for (DBObject node : this.mongo.collection().find(new BasicDBObject(TraceServiceImpl.FIELD_TRACE, traceId)).toArray()) {
 			// 解压(如果需要)
 			this.decode(node);
+			node.put("_id", node.get("_id").toString());
 			String parent = MongoUtils.asString(node, TraceServiceImpl.FIELD_SPAN_PARENT);
 			// 加载Root, 如果不存在Parent则作为Root节点加载(多个)
 			if (parent == null) {
