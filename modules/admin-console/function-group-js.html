@@ -1,0 +1,59 @@
+<script src="../assets/js/jquery.blockUI.js"></script>
+<script>
+	$("#navigation").html(param("group"));
+	$("#nav-search").empty();
+	$("#nav-search").append("单位:<select id=\"period\" style=\"width:100px;\"><option value=\"240\">MINUTE</option><option value=\"24\">HOUR</option><option value=\"30\">DAY</option></select> 排序字段:<select id=\"sortBy\" style=\"width:100px;\"><option value=\"TOTAL\">Total</option><option value=\"EXCEPTION\">Error</option><option value=\"TIMEOUT\">Timeout</option><option value=\"RTT\">Elapse</option></select>偏移:<input type=\"number\" class=\"nav-search-input\" id=\"period_offset\" style=\"width:75px;\"/>范围:<input type=\"number\" class=\"nav-search-input\" id=\"period_length\" style=\"width:75px;\"/>");
+	
+	var template = "<tr id=\"#{id}\"><td>#{service}</td><td>#{versionAndCatalog}</td><td>#{method}</td><td>#{max}</td><td>#{total}</td><td>#{error}</td><td>#{timeout}</td><td>#{elapse}</td></tr>";
+	
+	function methods() {
+		$.blockUI({message:'<h4>加载中...</h4>' });
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/methods/group?group=" + param("group") + "&application=" + param("application", "") + "&period=" +  $("#period").find('option:selected').text() + "&offset=" + period_offset() + "&length=" + period_length() + "&sortBy=" + $("#sortBy").val(),
+			success : function callback(data) {
+				$("#service-tab_tbody").empty();
+				$(data).each(function(index, element){
+					$("#service-tab_tbody").append(template.replace("#{id}", index).replace("#{service}", element.service).replace("#{versionAndCatalog}", element.version).replace("#{method}", element.name).replace("#{max}", element.max).replace("#{total}", element.total).replace("#{error}", element.exception).replace("#{timeout}", element.timeout).replace("#{elapse}", element.rtt));
+					$("#" + index).click(function(){
+						window.open("?function=function-chart&service=" + element.service + "&versionAndCatalog=" + element.version);
+					})
+				});
+				$.unblockUI();
+			}
+		});
+	}
+	
+	function period_offset() {
+		// 如果period_offset不为空则使用此值, 否则使用默认值
+		var period_def = $("#period").val();
+		var period_offset = $("#period_offset").val();
+		return period_offset != "" ? period_offset : period_def;
+	}
+	
+	function period_length() {
+		// 如果period_length不为空则使用此值, 否则使用最大值
+		var period_length = $("#period_length").val();
+		return period_length != "" ? period_length : Math.pow(2, 16);
+	}
+	
+	$("#period_offset").change(function() {
+		methods();
+	});
+	
+	$("#period_length").change(function() {
+		methods();
+	});
+	
+	$("#period").change(function() {
+		methods();
+	});
+	
+	$("#sortBy").change(function() {
+		methods();
+	});
+	
+	$(document).ready(function() {
+		methods();
+	});
+</script>

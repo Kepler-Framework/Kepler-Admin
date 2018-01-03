@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<bean id="kepler.mongo.tracer" class="com.kepler.admin.mongo.impl.MongoClientFactory" init-method="init" destroy-method="destroy">
+		<constructor-arg index="0" value="tracers" />
+		<constructor-arg index="1" value="#{T(com.kepler.config.PropertiesUtils).get('com.mongodb.mongoclient.host')}" />
+		<constructor-arg index="2" value="#{T(com.kepler.config.PropertiesUtils).get('com.mongodb.mongoclient.username')}" />
+		<constructor-arg index="3" value="#{T(com.kepler.config.PropertiesUtils).get('com.mongodb.mongoclient.password')}" />
+	</bean>
+
+	<bean id="kepler.mongo" class="com.kepler.admin.mongo.impl.MongoClientFactory" init-method="init" destroy-method="destroy">
+		<constructor-arg index="0" value="kepler" />
+		<constructor-arg index="1" value="#{T(com.kepler.config.PropertiesUtils).get('com.mongodb.mongoclient.host')}" />
+		<constructor-arg index="2" value="#{T(com.kepler.config.PropertiesUtils).get('com.mongodb.mongoclient.username')}" />
+		<constructor-arg index="3" value="#{T(com.kepler.config.PropertiesUtils).get('com.mongodb.mongoclient.password')}" />
+	</bean>
+
+	<bean id="kepler.mongo.config.transfer.minute" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="transfer.minute" />
+		<constructor-arg ref="kepler.mongo" />
+	</bean>
+
+	<bean id="kepler.mongo.config.transfer.hour" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="transfer.hour" />
+		<constructor-arg ref="kepler.mongo" />
+	</bean>
+
+	<bean id="kepler.mongo.config.transfer.day" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="transfer.day" />
+		<constructor-arg ref="kepler.mongo" />
+	</bean>
+
+	<bean id="kepler.mongo.config.status" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="status" />
+		<constructor-arg ref="kepler.mongo" />
+	</bean>
+
+	<bean id="kepler.mongo.config.generic" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="generic" />
+		<constructor-arg ref="kepler.mongo" />
+	</bean>
+
+	<bean id="kepler.mongo.config.trace.collector" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="trace" />
+		<constructor-arg ref="kepler.mongo" />
+	</bean>
+
+	<bean id="kepler.mongo.config.trace" class="com.kepler.admin.mongo.impl.MongoProxyConfig">
+		<constructor-arg value="trace" />
+		<constructor-arg ref="kepler.mongo.tracer" />
+	</bean>
+
+</beans>

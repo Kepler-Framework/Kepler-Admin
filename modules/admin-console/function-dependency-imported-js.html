@@ -1,0 +1,17 @@
+<script>
+	$("#navigation").html("应用已依赖");
+	//依赖模板
+	var template="<tr><td>#{service}</td><td>#{versionAndCatalog}</td><td>#{groups}</td><td>#{cluster}</td>";
+	
+	jQuery.ajax({
+		type : "GET",
+		url : "/api/dependency/imported?sid=" + param("sid"),
+		success : function callback(data) {
+			$("#imported").empty();
+			$(data).each(function(index, element){
+				//追加分组
+				$("#imported").append(template.replace("#{service}", element.service.service).replace("#{versionAndCatalog}", element.service.versionAndCatalog).replace("#{groups}", element.groups).replace("#{cluster}", element.cluster));
+			});
+		}
+	});
+</script>

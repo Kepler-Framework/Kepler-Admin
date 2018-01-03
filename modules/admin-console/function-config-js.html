@@ -1,0 +1,117 @@
+<script src="/assets/js/jquery-ui.js"></script>
+<script>
+	$("#navigation").html("参数配置");
+	$("#host").html(param("host"));
+	//模板
+	var template = "<tr><td class=\"\">#{key}</td><td id=\"td_#{id}\"><span><input id=\"input_#{id}\" name=\"#{key}\" type=\"text\" class=\"form-control\" value=\"#{value}\"></span></td></tr>";
+	
+	//加载Keys
+	function loadingKeys() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/adjust/keys",
+			success : function callback(data) {
+				$(data).each(function(index, element){
+					$("#keys").append("<option value='" + element + "'>" + element + "</option>");
+				});
+			}
+		});
+	}
+	
+	//加载动态配置
+	function loadingConfig() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/adjust/config?sid=" + param("sid"),
+			success : function callback(data) {
+				//清空列表
+				$("#configs").empty();
+				for ( var key in data.config) {
+					//加载配置
+					$("#configs").append(template.replaceAll("#{id}", key.replaceAll("\\.", "_")).replaceAll("#{key}", key).replace("#{value}", data.config[key]));
+					//加载Input输入框变化后的边框效果
+					$("#input_" + key.replaceAll("\\.", "_")).change(function() {
+						//边框加粗
+						$("#td_" + this.name.replaceAll("\\.", "_")).css('background-color', '#307ecc');
+					});
+				}
+			}
+		});
+	}
+	
+	function loadingServices() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/dependency/imported?sid=" + param("sid"),
+			success : function callback(data) {
+				$(data).each(function(index, element){
+					$("#services").append("<option value='" + element.service.service + ".'>" + element.service.service + "</option>");
+				});
+			}
+		});
+	}
+	
+	//绑定创建参数对话框
+	$("#create_key").dialog({
+		"resizable" : false,
+		"autoOpen" : false,
+		"modal" : true,
+		"height" : 275,
+		"width" : 600,
+		"buttons" : {
+			"取消" : function() {
+				$(this).dialog("close");
+				$("#key").val("");
+				$("#value").val("");
+			},
+			"确定" : function() {
+				$("#configs").append(template.replaceAll("#{id}", $("#key").val().replaceAll("\\.", "_")).replaceAll("#{key}", $("#services").find('option:selected').val() + $("#key").val()).replaceAll("#{value}", $("#value").val()));
+				$(this).dialog("close");
+				$("#key").val("");
+				$("#value").val("");
+			}
+		}
+	});
+	
+	//绑定修改配置按钮
+	$("#update").click(function() {
+		if(!confirm("是否确定变更")){
+			return;
+		}
+		var data = {
+			"sid" : param("sid")
+		};
+		$("#configs input[type='text']").each(function() {
+			data[this.name] = this.value;
+		});
+		jQuery.ajax({
+			type : "POST",
+			url : "/api/adjust/config",
+			data : data,
+			success : function callback(data) {
+				alert("已通知变更");
+				//刷新
+				loading();
+			}
+		});
+	});
+
+	//绑定创建配置按钮
+	$("#create").click(function() {
+		$("#create_key").dialog("open");
+	});
+	
+	$("#keys").change(function() {
+		$("#key").val($("#keys").val());
+	});
+
+	function loading(){
+		loadingKeys();
+		loadingConfig();
+		loadingServices();
+	}
+	
+	$(document).ready(function() {
+		loading();
+	});
+</script>

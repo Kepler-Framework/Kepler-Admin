@@ -1,0 +1,322 @@
+<script src="../assets/js/d3.min.js" charset="utf-8"></script>
+<script src="../assets/js/handlebars-v4.0.5.js" charset="utf-8"></script>
+<script
+	src="http://apps.bdimg.com/libs/underscore.js/1.7.0/underscore-min.js"></script>
+<style>
+.glowing-border {
+	border: 2px solid #9ecaed;
+	border-radius: 7px;
+	outline: none;
+	box-shadow: 0 0 10px #9ecaed;
+}
+
+text {
+	font-size: 12px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+#traceInfo tr, td {
+	padding: 8px;
+}
+
+.catelog {
+	fill: rgb(198, 219, 239);
+	stroke-width: 1px;
+	stroke: #3182bd;
+	cursor: pointer;
+}
+
+.catelog-error {
+	fill: rgb(255, 172, 172);
+	stroke-width: 1px;
+	stroke: #3182bd;
+	cursor: pointer;
+}
+
+.layer rect {
+	cursor: pointer;
+}
+
+.legendRect {
+	fill: none;
+	stroke: black;
+}
+
+.g_tag text {
+	font-size: 12px;
+}
+
+.axis line, .axis path {
+	fill: none;
+	stroke: black;
+	stroke-width: 1px;
+}
+
+path.link {
+	fill: none;
+	stroke: #9ecae1;
+	stroke-width: 1.5px;
+}
+
+pre {
+	padding: 0;
+	border: none;
+	background: none;
+}
+</style>
+<script>
+    Handlebars.registerHelper('json', function (context) {
+        if (typeof(context) == 'string') {
+            try {
+                    context = JSON.parse(context);
+            } catch (err) {
+            }
+        }
+        return "<pre>" + JSON.stringify(context, null, 4).replace(/\\n/g, '\n').replace(/\\t/g, '\t') + "</pre>";
+    });
+
+    $("#navigation").html("问题跟踪");
+
+    var chart = d3.select(".chart");
+    var $chart = $(chart[0]);
+    var $traceInfoTable = $("#traceInfo");
+    var loading = $("#loading");
+
+    function resetView() {
+        $chart.html("");
+        $traceInfoTable.html("");
+    }
+    
+    function searchTrace(traceId) {
+        console.log("Searching trace:" + traceId);
+        try {
+            resetView();
+            loading.html("Waiting...");            
+            $.get("/api/traces/get?trace=" + traceId, function (spans) {
+                if (spans) {
+                    loading.html("");
+                    if (Array.isArray(spans)) {
+                        if (spans.length == 1) {
+                            spans = spans[0];
+                        } else {
+                            var root = {children: spans, startTime: 0, elapse: 0, transferTime: 0, waiting: 0, elapse: 0, _id: "-1", service: "[]层级", method: ""};
+                            root.startTime = _(root.children).min("startTime").startTime;
+                            root.receivedTime = root.startTime;
+                            var lastSpan = _(root.children).max(function(d) {return d["startTime"] + d["elapse"] + d["transferTime"] + d["waiting"]; });
+                            root.elapse = lastSpan["startTime"] + lastSpan["elapse"] + lastSpan["transferTime"] + lastSpan["waiting"] - root.startTime;
+                            spans = root;
+                        }
+                    }
+                    draw(spans);
+                } else {
+                    loading.html("没有匹配结果");
+                }
+            }).fail(function () {
+                loading.html("网络异常");
+            });
+        } catch (e) {
+            console.error(e);
+        }
+        return false;
+    }
+
+    function draw(spans) {
+        var chartWidth = $(chart[0]).width();
+        var bar = {width: 420, height: 30};
+        var margin = {top: 30, right: 30, left: 2};
+        var boundary = {width: chartWidth - bar.width - margin.right - margin.left};
+        var linePadding = 10;
+        var legendHeight = 30;
+        var tree = d3.layout.tree().nodeSize([0, 20]);
+        var spans = spans;
+        var index = {};
+
+        doDraw();
+
+        function doDraw() {
+            nodes = tree.nodes(spans);
+            nodes.forEach(function (d, i) {
+                d.x = d.y;
+                d.y = i * (bar.height + linePadding);
+                d.i = i;
+            });
+            nodes.forEach(function (span) {
+                index[span._id] = span;
+            });
+            chart.attr("height", (linePadding + bar.height) * nodes.length + (linePadding + legendHeight) * 3 + margin.top);
+            chart.selectAll('.g_tag').data([0]).enter().append("g").attr("transform", "translate(0, 15)").attr("class", "g_tag").append("text").text("Service层级");
+            drawCatelog(nodes, bar, margin, boundary, linePadding);
+            drawChart(nodes, bar, margin, boundary, linePadding);
+        }
+
+        function drawChart(nodes, bar, margin, boundary, linePadding) {
+            var dimensions = ["transferTime", "waiting", "elapse"];
+            var data = dimensions.map(function (dimension) {
+                return nodes.map(function (node) {
+                    return {
+                        x: node._id,
+                        y: node[dimension],
+                        startTime: node.startTime,
+                        method: node.method,
+                        waiting: node.waiting,
+                        elapse: node.elapse,
+                        transferTime: node.transferTime
+                    };
+                });
+            });
+
+            var traceBegin = nodes[0].startTime;
+            var domainRange = nodes[0].receivedTime + nodes[0].elapse + nodes[0].waiting - nodes[0].startTime;
+            var color = d3.scale.ordinal().range(["#C6DBEF", "#98abc5", "#8a89a6"]);
+            var x = d3.scale.linear().range([0, boundary.width]).domain([0, domainRange]);
+            var xAxis = d3.svg.axis().scale(x).orient("top").tickFormat(function (d) {
+                return d + 'ms';
+            });
+            var layers = d3.layout.stack()(data);
+
+            chart.selectAll(".axis").data([0]).enter().append("g").attr("class", "axis").attr("transform", "translate(" + (bar.width + margin.left + 20) + ", 20)").call(xAxis);
+
+            var chartGraph = chart.selectAll(".chart_graph").data([0]);
+            chartGraph.enter().append('g').attr("class", "chart_graph").attr("transform", "translate(" + (bar.width + margin.left + 20) + ")");
+            chartGraph.exit().remove();
+
+            var g = chartGraph.selectAll(".layer").data(layers);
+            g.enter().append("g").attr("class", "layer");
+            g.style("fill", function (d, i) {
+                return color(i);
+            });
+            g.exit().remove();
+
+            var rects = g.selectAll("rect").data(function (d) {
+                return d;
+            });
+            rects.enter().append('rect');
+            rects.attr("x", function (d) {
+            	return x(d.y0 + d.startTime - traceBegin);
+            }).attr("y", function (d, i) {
+                return bar.height * i + linePadding * i + margin.top;
+            }).attr("width", function (d) {
+                 return Math.max(x(d.y), 1);
+            }).attr("height", bar.height).on("click", function (d) {
+            	 console.log(d);
+                 if (d['x'] === "-1") {
+                 	return;
+                 }
+                 var copy = createCopy(index[d.x]);
+                 	showInfo(copy);
+                 });
+            	rects.exit().remove();
+           		var methods = chartGraph.selectAll("text.method").data(layers[0]);
+            	methods.enter().append("text").attr("class", "method");
+            	methods.attr("dy", 5 + bar.height / 2).attr("x", function (d) {
+                	return x(d.y0 + d.startTime - traceBegin);
+               	}).attr("y", function (d, i) {
+                    return bar.height * i + linePadding * i + margin.top;
+                }).attr("dx", 3).text(function (d) {
+                    return (d.elapse + d.waiting + d.transferTime) + "ms  " + d.method + "()";
+               	});
+            methods.exit().remove();
+
+            color.domain(["transferTime", "waiting", "elapse"]);
+
+            var graphHeight = (linePadding + bar.height) * nodes.length + margin.top;
+            var legendRect = chart.selectAll(".legendRect").data([0]);
+            legendRect.enter().append("rect").attr("class", "legendRect");
+            legendRect.attr("x", (bar.width + 20)).attr("y", graphHeight).attr("width", 150).attr("height", 3 * 20 + 2 * linePadding);
+            legendRect.exit().remove();
+
+            var legend = chart.selectAll(".legend").data(color.domain());
+            var legendEntered = legend.enter().append("g").attr("class", "legend");
+            legendEntered.append("rect");
+            legendEntered.append("text");
+
+            legend.attr("transform", function (d, i) {
+                return "translate(" + (bar.width + 20 + 10) + "," + (i * 20 + graphHeight + linePadding) + ")";
+            });
+
+            legend.selectAll("rect").attr("x", 0).attr("width", 18).attr("height", 18).style("fill", color);
+            legend.selectAll("text").attr("x", 25).attr("y", 9).attr("dy", ".35em").style("text-anchor", "start").text(function (d) {
+            	return d;
+            });
+            legend.exit().remove();
+
+        }
+
+        function drawCatelog(nodes, bar, margin, boundary, linePadding) {
+            var tree = d3.layout.tree().nodeSize([0, 20]);
+            perpenticular = function (d) {
+                var source = d.source, dest = d.target;
+                var link = "M" + (source.x + margin.left + 10) + "," + (source.y + bar.height + margin.top) + " ";
+                link += "L" + (source.x + margin.left + 10) + "," + (dest.y + bar.height / 2 + margin.top) + " ";
+                link += "L" + (dest.x + margin.left) + "," + (dest.y + bar.height / 2 + margin.top) + " ";
+                return link;
+            };
+
+            var links = chart.selectAll("path.link").data(tree.links(nodes));
+            links.enter().append("path").attr("class", "link");
+            links.attr("d", perpenticular);
+            links.exit().remove();
+
+            var g = chart.selectAll(".l").data(nodes, function (d) {
+                return d._id;
+            });
+            var gEnter = g.enter().append("g").attr("class", "l");
+            var gUpdate = g.attr("transform", function (d, i) {
+                return "translate(" + (d.x + margin.left) + ", " + (d.y + margin.top) + ")";
+            });
+
+            gEnter.append("rect");
+            gUpdate.selectAll("rect").attr("width", function (d) {
+                return bar.width - d.x;
+            }).attr("height", bar.height).attr("class", function (d) {
+                if (!d.throwable) {
+                    return "catelog";
+                } else {
+                    return "catelog-error";
+                }
+            }).on('click', function (d) {
+                if (d['_id'] === "") {
+                    return;
+                }
+                var copy = createCopy(index[d._id]);
+                showInfo(copy);
+            });
+
+            gEnter.append("text");
+            gUpdate.selectAll("text").attr("dy", "18").attr("dx", "5").text(function (d) {
+            	return d.service.split("]")[1].split("[")[0];
+            });
+            g.exit().remove();
+        }
+
+        function createCopy(d) {
+            var copy = $.extend({}, d);
+            delete copy.parent;
+            delete copy.children;
+            delete copy._children;
+            delete copy.depth;
+            delete copy.i;
+            delete copy.x;
+            delete copy.y;
+            return copy;
+        }
+    }
+
+    function showInfo(spanInfo) {
+        var source = $("#traceInfo-template").html();
+        var template = Handlebars.compile(source);
+        $("#traceInfo").addClass("glowing-border");
+        $traceInfoTable.html(template({span: spanInfo}));
+        setTimeout(function () {
+            $("#traceInfo").removeClass("glowing-border");
+        }, 800);
+    }
+    
+    $(document).ready(function() {
+		var trace = param("trace");
+		if(trace != "" && trace != null) {
+			$("#traceId").val(trace);
+			$("#traceSearch").click();
+		}
+	});
+</script>

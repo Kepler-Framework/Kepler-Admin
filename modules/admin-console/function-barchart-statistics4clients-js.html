@@ -1,0 +1,57 @@
+<script src="../assets/js/chart/highcharts.js"></script>
+<script src="../assets/js/chart/modules/exporting.js"></script>
+<script src="function-barchart-js-build.js"></script>
+<script>
+	//收起左侧菜单
+	$("#sidebar-collapse").click();
+	//更新导航
+	$("#navigation").html("客户端统计");
+	
+	var template = "<tr><td>#{date}</td><td>#{group}</td><td>#{application}</td><td>#{host}</td><td>#{cause}</td><td>#{trace}</td><td><button id=\"#{trace}_#{index}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-history\"></button></td></tr>";
+	
+	function loadClients() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/barchart?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&method=" + param("method") + "&period=" + param("period") + "&offset=" + param("offset") + "&length=" + param("length"),
+			success : function callback(data) {
+				var total = build("客户端调用量", data[0].categories, data[0].series, "total", "");
+				var error = build("客户端错误量", data[1].categories, data[1].series, "error", "");
+				var elapse = build("客户端调用耗时", data[2].categories, data[2].series, "elapse(ms)", " ms");
+				draw([total, error, elapse], ['clients-total', 'clients-error', 'clients-elapse']);
+				
+			}
+		});
+	}
+	
+	function loadCauses() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/traces/causes?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&method=" + param("method") + "&period=" + param("period") + "&offset=" + param("offset") + "&length=" + param("length"),
+			success : function callback(data) {
+				$(data).each(function(index, element){
+					$("#trace-tab_tbody").append(template.replace("#{date}", element.date).replace("#{group}", element.group).replace("#{application}", element.application).replace("#{host}", element.host).replace("#{cause}", element.cause).replace("#{index}", index).replaceAll("#{trace}", element.trace));
+					$("#" + element.trace + "_" + index).click(function() {
+						window.open("?function=function-trace&trace=" + element.trace, "_blank");
+					});
+				});
+			}
+		});
+	}
+	
+	function draw(data, canvas) {
+		$(data).each(function(index, element){
+			$("#" + canvas[index]).highcharts(element);
+		});
+	}
+	
+	window.onload = function() {
+		$("#info_service").html(param("service"));
+		$("#info_version").html(param("versionAndCatalog"));
+		$("#info_method").html(param("method"));
+		$("#info_period").html(param("period"));
+		$("#info_offset").html(param("offset"));
+		$("#info_length").html(param("length"));
+		loadClients();
+		loadCauses();
+	}
+</script>

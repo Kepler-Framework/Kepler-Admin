@@ -1,0 +1,19 @@
+<form class="form-inline" method="get" onsubmit="searchTrace(this.traceId.value);return false;">
+    <div class="form-group">
+        <input type="text" size="50" class="form-control" placeholder="TRACE ID" name="traceId" id="traceId">
+    </div>
+    <button type="submit" class="btn btn-default" style="padding: 2px;" id="traceSearch">搜索</button>
+</form>
+<hr/>
+<h1 id="loading"></h1>
+<svg class="chart" width="100%"></svg>
+<table class="table table-bordered" width="100%" id="traceInfo">
+</table>
+<script id="traceInfo-template" type="text/x-handlebars-template">
+    {{#each span}}
+    <tr>
+        <td style="border:1px solid #dddddd;" width="30%">{{@key}}</td>
+        <td style="border:1px solid #dddddd;" width="70%">{{{json this}}}</td>
+    </tr>
+    {{/each}}
+</script>

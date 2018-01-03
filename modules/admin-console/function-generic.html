@@ -1,0 +1,42 @@
+<div class="row-xs">
+	<select id="finder_tags" style="width: 100px;">
+		<option value="">Select Tags ...</option>
+	</select> 
+	<select id="finder_groups" style="width: 200px;">
+		<option value="">Select Group ...</option>
+	</select> 
+	<select id="finder_applications" style="width: 200px;">
+		<option value="">Select Application ...</option>
+	</select> 
+	<select id="finder_services" style="width: 500px;">
+		<option value="">Select Service ...</option>
+	</select>
+</div>
+<br></br>
+<div class="tabbable">
+	<ul class="nav nav-tabs" id="myTab">
+		<li class="active">
+			<a id="title_request" data-toggle="tab" href="#tab_request" aria-expanded="true">
+				请求
+			</a>
+		</li>
+		<li class="">
+			<a id="title_response" data-toggle="tab" href="#tab_response" aria-expanded="false">
+				响应
+			</a>
+		</li>
+	</ul>
+</div>
+<div class="tab-content">
+	<div id="tab_request" class="tab-pane fade active in">
+		<textarea style="color:#000" id="request" rows="25" cols="130"></textarea>
+	</div>
+	<div id="tab_response" class="tab-pane fade">
+		<textarea style="color:#000" id="response" rows="25" cols="130"></textarea>
+	</div>
+</div>
+<span id="format" class="btn btn-info btn-sm tooltip-info" data-rel="tooltip" data-placement="bottom" title="" data-original-title="Bottm Info">格式化</span>
+<span id="clear" class="btn btn-info btn-sm tooltip-info" data-rel="tooltip" data-placement="bottom" title="" data-original-title="Bottm Info">重置请求</span>
+<span id="invoke" class="btn btn-info btn-sm tooltip-info" data-rel="tooltip" data-placement="bottom" title="" data-original-title="Bottm Info">执行请求</span>
+<span id="template" class="btn btn-info btn-sm tooltip-info" data-rel="tooltip" data-placement="bottom" title="" data-original-title="Bottm Info">查找模板</span>
+<span id="trace" class="btn btn-info btn-sm tooltip-info" data-rel="tooltip" data-placement="bottom" title="" data-original-title="Bottm Info">问题跟踪</span>

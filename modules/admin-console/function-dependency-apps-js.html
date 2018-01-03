@@ -1,0 +1,27 @@
+<script>
+	$("#navigation").html("服务被依赖-实例明细");
+	
+	$("#dependency").empty();
+	
+	$("#info_service").html(param("service"));
+	$("#info_version").html(param("versionAndCatalog"));
+	$("#info_group").html(param("group"));
+	$("#info_app").html(param("app"));
+	
+	//模板
+	var template="<tr><td>#{sid}</td><td>#{host}</td><td><button id=\"#{refs}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-desktop\"></button></td></tr>";
+	
+	jQuery.ajax({
+		type : "GET",
+		url : "/api/dependency/exported/instances?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&group=" + param("group") + "&app=" + param("app"),
+		success : function callback(data) {
+			$(data).each(function(index, app){
+				//追加分组
+				$("#dependency").append(template.replace("#{sid}", app.sid).replace("#{host}", app.host).replace("#{refs}", app.sid));
+				$("#" + app.sid).click(function() {
+					window.location.href = "/?function=function-status&host=" + app.host + "&sid=" + app.sid;
+				});
+			})
+		}
+	});
+</script>

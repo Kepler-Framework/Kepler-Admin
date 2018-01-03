@@ -1,0 +1,86 @@
+<div id="chart_overview" class="widget-header header-color-blue height 15px">
+	<h4 id="chart_overview_title" class="widget-title lighter smaller"></h4>
+	<div class="widget-toolbar">
+		<a id="setting" href="#" style="color:#ffffff"> 
+			<i class="fa fa-cog"></i>
+		</a> 
+		<a id="dependency" href="#" style="color:#ffffff"> 
+			<i class="fa fa-sitemap"></i>
+		</a> 
+	</div>
+</div>
+<table id="chart_overview_view" class="table table-striped table-bordered table-hover">
+	<thead>
+		<tr>
+			<th width="33%">
+				<div id="service-total" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+			</th>
+			<th width="33%">
+				<div id="service-elapse" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+			</th>
+			<th width="33%">
+				<div id="service-error" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+			</th>
+		</tr>
+	</thead>
+</table>
+<table id="chart_service_methods" class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th width="35%">方法名</th>
+				<th width="20%">累计访问</th>
+				<th width="15%">超时数量</th>
+				<th width="13%">异常数量</th>
+				<th width="7%">平均耗时</th>
+				<th width="7%">最长耗时</th>
+				<th width="3%"></th>
+			</tr>
+		</thead>
+		<tbody id="method-tab_tbody_service">
+		</tbody>
+	</table>
+<div id="chart_instances">
+	<div id="chart_instance_title_#{sid}" class="widget-header header-color-orange">
+		<h4 class="widget-title lighter smaller">#{host}</h4>
+		<div class="widget-toolbar">
+			<a id="setting_#{sid}" href="#"> 
+				<i class="fa fa-cog"></i>
+			</a> 
+			<a id="dependency_#{sid}" href="#"> 
+				<i class="fa fa-sitemap"></i>
+			</a>
+			<a id="status_#{sid}" href="#"> 
+				<i class="fa fa-desktop"></i>
+			</a>  
+		</div>
+	</div>
+	<table id="chart_instance_view_#{sid}" class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th width="33%">
+					<div id="#{instance}-total" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+				</th>
+				<th width="33%">
+					<div id="#{instance}-elapse" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+				</th>
+				<th width="33%">
+					<div id="#{instance}-error" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+				</th>
+			</tr>
+		</thead>
+	</table>
+	<table id="chart_instance_methods_#{sid}" class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th width="35%">方法名</th>
+				<th width="20%">累计访问</th>
+				<th width="15%">超时数量</th>
+				<th width="15%">异常数量</th>
+				<th width="8%">平均耗时</th>
+				<th width="7%">最长耗时</th>
+			</tr>
+		</thead>
+		<tbody id="method-tab_tbody_#{sid}">
+		</tbody>
+	</table>
+</div>

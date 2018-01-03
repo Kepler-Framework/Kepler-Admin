@@ -1,0 +1,20 @@
+<script>
+	$("#navigation").html("主机参数");
+	var template = "<tr><td class=\"\">#{key}</td><td class=\"\">#{value}</td></tr>";
+	$("#host_host").html(param("host"));
+	//左上角图标	
+	$("#chart").click(function() {
+		window.location.href = "/?function=function-chart-status&sid=" + param("sid") + "&host=" + param("host");
+	});
+	//加载静态状态
+	jQuery.ajax({
+		type : "GET",
+		url : "/api/terminal/sid?sid=" + param("sid"),
+		success : function callback(data) {
+			$("#status").empty();
+			for ( var key in data.status) {
+				$("#status").append(template.replace("#{key}", key).replace("#{value}", data.status[key]));
+			}
+		}
+	});
+</script>

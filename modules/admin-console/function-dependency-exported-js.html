@@ -1,0 +1,31 @@
+<script>
+	$("#navigation").html("服务被依赖");
+	//分组模板
+	var template_group = $("#groups").html();
+	$("#groups").empty();
+	
+	$("#info_service").html(param("service"));
+	$("#info_version").html(param("versionAndCatalog"));
+	
+	//依赖模板
+	var template="<tr><td>#{app}</td><td><button id=\"#{refs}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-sitemap\"></button></td></tr>";
+	
+	jQuery.ajax({
+		type : "GET",
+		url : "/api/dependency/exported/apps?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog"),
+		success : function callback(data) {
+			$(data).each(function(index_group, group){
+				//追加分组
+				$("#groups").append(template_group.replaceAll("#{group}", group.group));
+				$("#" + group.group + "_name").html(group.group);
+				$(group.apps).each(function(index_app, app){
+					//追加分组APP
+					$("#" + group.group + "_exported").append(template.replace("#{app}", app).replace("#{refs}", group.group + "_" + app));
+					$("#" + group.group + "_" + app).click(function(){
+						window.location.href = "/?function=function-dependency-apps&service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&group=" + group.group + "&app=" + app;
+					});
+				});
+			});
+		}
+	});
+</script>

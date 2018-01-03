@@ -1,0 +1,76 @@
+<table class="table table-striped table-bordered table-hover">
+	<thead class="thin-border-bottom">
+		<tr>
+			<th width="35%">
+				服务
+			</th>
+			<th width="15%">
+				版本
+			</th>
+			<th width="25%">
+				方法
+			</th>
+			<th width="5%">
+				单位
+			</th>
+			<th width="10%">
+				偏移
+			</th>
+			<th width="10%">
+				长度
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<span id="info_service"></span>
+			</td>
+			<td>
+				<span id="info_version"></span>
+			</td>
+			<td>
+				<span id="info_method"></span>
+			</td>
+			<td>
+				<span id="info_period"></span>
+			</td>
+			<td>
+				<span id="info_offset"></span>
+			</td>
+			<td>
+				<span id="info_length"></span>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<table id="barchart_clients" class="table table-striped table-bordered table-hover">
+	<thead>
+		<tr>
+			<th width="33%">
+				<div id="clients-total" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+			</th>
+			<th width="33%">
+				<div id="clients-elapse" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+			</th>
+			<th width="33%">
+				<div id="clients-error" style="min-width: 110px; height: 400px; margin: 0 auto"></div>
+			</th>
+		</tr>
+	</thead>
+</table>
+<table class="table table-striped table-bordered table-hover">
+	<thead>
+		<tr>
+			<th width="17%">记录时间</th>
+			<th width="10%">来源分组</th>
+			<th width="10%">来源应用</th>
+			<th width="10%">来源主机</th>
+			<th width="30%">原因</th>
+			<th width="21%">跟踪</th>
+			<th width="2%"></th>
+		</tr>
+	</thead>
+	<tbody id="trace-tab_tbody">
+	</tbody>
+</table>

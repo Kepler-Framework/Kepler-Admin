@@ -1,0 +1,113 @@
+<script>
+	$("#navigation").html("服务管理");
+	var template = "<tr><td>#{service}</td><td>#{versionAndCatalog}</td><td><button id=\"config_#{id}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-cog\"></button></td><td><button id=\"dependency_#{id}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-sitemap\"></button></td></td><td><button id=\"chart_#{id}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-line-chart\"></button></td></tr>";
+	//Select for Applications
+	function applications() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/applications?group=" +  $("#finder_groups").val(),
+			success : function callback(data) {
+				$("#finder_applications").empty(); 
+				$("#finder_applications").prepend("<option value=''>Select Application ... </option>");
+				$(data).each(function(index, element){
+					$("#finder_applications").append("<option value='" + element + "'>" + element + "</option>"); 
+				});
+			}
+		});
+	}
+	//Select for Groups
+	function groups() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/groups",
+			success : function callback(data) {
+				$("#finder_groups").empty(); 
+				$("#finder_groups").prepend("<option value=''>Select Group ... </option>");
+				$(data).each(function(index, element){
+					$("#finder_groups").append("<option value='" + element + "'>" + element + "</option>"); 
+				});
+			}
+		});
+	}
+	//Select fot Tags
+	function tags() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/tags",
+			success : function callback(data) {
+				$("#finder_tags").empty(); 
+				$("#finder_tags").prepend("<option value=''>Select Tag ... </option>");
+				$(data).each(function(index, element){
+					$("#finder_tags").append("<option value='" + element + "'>" + element + "</option>"); 
+				});
+			}
+		});
+	}
+
+	function loading(data, element) {
+		$("#service-tab_tbody").empty();
+		$(data).each(function(index, each){
+			//加载服务项
+			$("#service-tab_tbody").append(template.replace("#{service}", each.service).replaceAll("#{id}", index).replace("#{versionAndCatalog}", each.versionAndCatalog));
+			//绑定图表,配置,依赖按钮
+			$("#chart_" + index).click(function() {
+				window.open("/?function=function-chart&service=" + each.service + "&versionAndCatalog=" + each.versionAndCatalog, "_blank");
+			});
+			$("#config_" + index).click(function() {
+				window.open("/?function=function-management-overview&service=" + each.service + "&versionAndCatalog=" + each.versionAndCatalog, "_blank");
+			});
+			$("#dependency_" + index).click(function() {
+				window.open("/?function=function-dependency-exported&service=" + each.service + "&versionAndCatalog=" + each.versionAndCatalog, "_blank");
+			});
+		});
+	}
+	
+	//Application变化
+	$("#finder_applications").change(function() {
+		$("#finder_tags").val("");
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/service/application?group=" + $("#finder_groups").val() + "&application=" + $("#finder_applications").val(),
+			success : loading
+		});
+	});
+	
+	//Group变化
+	$("#finder_groups").change(function() {
+		//加载应用
+		applications();
+		//展示详情按钮
+		if($("#finder_groups").val() != "") {
+			$("#groups").empty();
+			$("#groups").append("<button id=\"group\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-search\"></button>");
+			$("#group").click(function(){
+				window.open("/?function=function-group&group=" + $("#finder_groups").val() + "&application=" + $("#finder_applications").val());
+			});
+		}else {
+			$("#nav-search2").empty();
+		}
+		$("#finder_tags").val("");
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/service/group?group=" + $("#finder_groups").val(),
+			success : loading
+		});
+	});
+	
+	//Tag变化
+	$("#finder_tags").change(function() {
+		//清除详情按钮
+		$("#nav-search2").empty();
+		$("#finder_groups").val("");
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/service/tag?tag=" + $("#finder_tags").val(),
+			success : loading
+		});
+	});
+	
+	$(document).ready(function() {
+		groups();
+		tags();
+	});
+</script>

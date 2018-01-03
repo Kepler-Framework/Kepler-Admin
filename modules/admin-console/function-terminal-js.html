@@ -1,0 +1,127 @@
+<script>
+	$("#navigation").html("终端管理");
+	
+	var template = "<tr><td>#{host}</td><td>#{group}</td><td>#{application}</td><td>#{sid}</td><td><button id=\"config_#{sid}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-cog\"></button></td><td><button id=\"status_#{sid}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-desktop\"></button></td><td><button id=\"dependency_#{sid}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-sitemap\"></button></td></td><td><button id=\"chart_#{sid}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-line-chart\"></button></td></tr>";
+	
+	//Select for Applications
+	function applications() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/terminal/applications?group=" + $("#finder_groups").val(),
+			success : function callback(data) {
+				$("#finder_applications").empty(); 
+				$("#finder_applications").prepend("<option value=''>Select Application ... </option>");
+				$(data).each(function(index, element){
+					$("#finder_applications").append("<option value='" + element + "'>" + element + "</option>"); 
+				});
+			}
+		});
+	}
+	
+	//Select for Groups
+	function groups() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/terminal/groups",
+			success : function callback(data) {
+				$("#finder_groups").empty(); 
+				$("#finder_groups").prepend("<option value=''>Select Group ... </option>");
+				$(data).each(function(index, element){
+					$("#finder_groups").append("<option value='" + element + "'>" + element + "</option>"); 
+				});
+			}
+		});
+	}
+
+	function loadings(data, element) {
+		$("#service-tab_tbody").empty();
+		$(data).each(function(index, each){
+			loading(each, element, false);
+		});
+	}
+	
+	function loading(data, element) {
+		loading(data, element, true);
+	}
+	
+	function loading(data, element, clear) {
+		if(clear) {
+			$("#service-tab_tbody").empty();
+		}
+		//加载服务项
+		$("#service-tab_tbody").append(template.replace("#{host}", data.host + ":" + data.port + "[@" + data.pid + "]").replace("#{group}", data.group).replace("#{application}", data.application).replaceAll("#{sid}", data.sid));
+		//绑定图表,依赖按钮等
+		$("#chart_" + data.sid).click(function() {
+			window.open("/?function=function-chart-status&sid=" + data.sid, "_blank");
+		});
+		$("#dependency_" + data.sid).click(function() {
+			window.open("/?function=function-dependency-imported&sid=" + data.sid, "_blank");
+		});
+		$("#status_" + data.sid).click(function() {
+			window.open("/?function=function-status&sid=" + data.sid + "&host=" + data.host, "_blank");
+		});
+		$("#config_" + data.sid).click(function() {
+			window.open("/?function=function-config&sid=" + data.sid + "&host=" + data.host, "_blank");
+		});
+	} 
+	
+	//Group变化
+	$("#finder_groups").change(function() {
+		$("#finder_sid").val("");
+		$("#finder_sid").attr("placeholder", "SID");
+		$("#finder_host").val("");
+		$("#finder_host").attr("placeholder", "IP");
+		//加载应用
+		applications(); 
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/terminal/group?group=" + $("#finder_groups").val(),
+			success : loadings
+		});
+	});
+	
+	//Application变化
+	$("#finder_applications").change(function() {
+		$("#finder_sid").val("");
+		$("#finder_sid").attr("placeholder", "SID");
+		$("#finder_host").val("");
+		$("#finder_host").attr("placeholder", "IP");
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/terminal/application?group=" + $("#finder_groups").val() + "&application=" + $("#finder_applications").val(),
+			success : loadings
+		});
+	});
+	
+	//HOST变化
+	$("#finder_host").change(function() {
+		$("#finder_sid").val("");
+		$("#finder_sid").attr("placeholder", "SID");
+		if($("#finder_host").val() != ""){
+			groups();
+			jQuery.ajax({
+				type : "GET",
+				url : "/api/terminal/host?host=" + $("#finder_host").val(),
+				success : loadings
+			});
+		}
+	});
+	
+	//SID变化
+	$("#finder_sid").change(function() {
+		$("#finder_host").val("");
+		$("#finder_host").attr("placeholder", "IP");
+		if($("#finder_sid").val() != ""){
+			groups();
+			jQuery.ajax({
+				type : "GET",
+				url : "/api/terminal/sid?sid=" + $("#finder_sid").val(),
+				success : loading
+			});
+		}
+	});
+	
+	$(document).ready(function() {
+		groups();
+	});
+</script>

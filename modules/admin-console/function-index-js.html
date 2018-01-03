@@ -1,0 +1,43 @@
+<script>
+	$("#navigation").html("控制台");
+	
+	var template = "<tr><td>#{group}</td><td id=\"#{group}_application\"></td><td>#{service}</td><td id=\"#{group}_instance\"></td></tr>";
+	
+	$("#groups").empty();
+	
+	jQuery.ajax({
+		type : "GET",
+		url : "/api/finder/groups",
+		success : function callback(groups) {
+			// 加载业务组
+			$(groups).each(function(index, group) {
+				jQuery.ajax({
+					type : "GET",
+					url : "/api/finder/service/group?group=" + group,
+					// 加载业务组对应服务集合
+					success : function callback(services) {
+						$("#groups").append(template.replaceAll("#{group}", group).replace("#{service}", services.length));
+						$(services).each(function(index, service) {
+							jQuery.ajax({
+								type : "GET",
+								url : "/api/finder/instances/service4version?service=" + service.service + "&versionAndCatalog=" + service.versionAndCatalog,
+								// 加载服务对应实例集合
+								success : function callback(instances) {
+									$("#" + group + "_instance").html(instances.length);
+								}
+							});
+							jQuery.ajax({
+								type : "GET",
+								url : "/api/finder/applications?group=" + group,
+								// 加载服务对应应用
+								success : function callback(groups) {
+									$("#" + group + "_application").html(groups.length);
+								}
+							});
+						});
+					}
+				});
+			});
+		}
+	});
+</script>

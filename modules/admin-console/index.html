@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="cn">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta charset="utf-8" />
+		<title>Kepler Admin</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+		<link rel="stylesheet" href="../assets/css/ace-fonts.css" />
+		<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+		<link rel="stylesheet" href="../assets/css/font-awesome.css" />
+		<link rel="stylesheet" href="../assets/css/ace.css" class="ace-main-stylesheet" id="main-ace-style" />
+		<link rel="stylesheet" href="../assets/css/ace.min.css" />
+	</head>
+	<body class="no-skin">
+		<div id="navbar" class="navbar navbar-default">
+			<div class="navbar-container" id="navbar-container">
+				<div class="navbar-header pull-left">
+					<a href="#" class="navbar-brand">
+						<small>
+							<i class="fa fa-leaf"></i>
+							Kepler Admin
+						</small>
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="main-container" id="main-container">
+			<div id="sidebar" class="sidebar responsive">
+				<!--# include file="index-menu-list.html" -->
+			</div>
+			<div class="main-content">
+				<div class="main-content-inner">
+					<div class="breadcrumbs" id="breadcrumbs">
+						<!--# include file="content-navigation.html" -->
+						<!--# include file="content-search.html" -->
+					</div>
+					<div class="page-content">
+						<!--# if expr="$arg_function" -->
+						<!--# else -->
+							<!--# set var="arg_function" value="function-index" -->
+						<!--# endif -->
+						<!--# include file="$arg_function.html" -->
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="../assets/js/jquery.js"></script>
+		<script src="../assets/js/bootstrap.js"></script>
+		<script src="../assets/js/ace/ace.js"></script>
+		<script src="../assets/js/ace/ace.sidebar.js"></script>
+		<script type="text/javascript">
+			String.prototype.replaceAll = function(s1, s2){
+		　　		return this.replace(new RegExp(s1, "gm"),s2);
+			}
+			
+			function param(name, def) {
+				var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); 
+			    var r = window.location.search.substr(1).match(reg);  
+			    if (r != null) return unescape(r[2]); return def; 
+			}
+			
+			$("#home").click(function (){
+				window.location.href = "/";
+			});
+		</script>
+		<!--# include file="$arg_function-js.html" -->
+	</body>
+</html>

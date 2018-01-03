@@ -1,0 +1,59 @@
+<script>
+	$("#navigation").html("配置实例");
+	//修改前提示
+	function modify(input, field, data) {
+		if(confirm("是否修改: " + field + " ?")) {
+			jQuery.ajax({
+				type : "POST",
+				url : "/api/adjust/" + field,
+				data : data,
+				success : function callback(data) {
+					alert("修改成功");
+					config();
+				}
+			});
+		}else {
+			$("#" + input).val("");
+		}
+	}
+	//Tag触发监听
+	$("#service_tag").change(function (){
+		modify("service_tag", "tag", {"sid": param("sid"), "service": param("service"), "versionAndCatalog": param("versionAndCatalog"), "tag": $("#service_tag").val()});
+	});
+	//优先级触发监听
+	$("#service_priority").change(function (){
+		modify("service_priority", "priority", {"sid": param("sid"), "service": param("service"), "versionAndCatalog": param("versionAndCatalog"), "priority": $("#service_priority").val()});
+	});
+	//Tag重置
+	$("#service_tag_clear").click(function (){
+		modify("service_tag", "tag", {"sid": param("sid"), "service": param("service"), "versionAndCatalog": param("versionAndCatalog"), "tag": ""});
+	});
+	//优先级重置
+	$("#service_priority_clear").click(function (){
+		modify("service_priority", "priority", {"sid": param("sid"), "service": param("service"), "versionAndCatalog": param("versionAndCatalog"), "priority": 5});
+	});
+	
+	function config() {
+		//初始化
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/adjust?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&sid=" + param("sid"),
+			success : function callback(data) {
+				$("#service_version").html(data.service.versionAndCatalog);
+				$("#service_name").html(data.service.service);
+				$("#service_group").html(data.group);
+				$("#service_host").html(data.host);
+				$("#service_sid").html(data.sid);
+				$("#service_tag").val(data.tag);
+				$("#service_priority").val(data.priority);
+				$("#host_config").click(function() {
+					window.open("/?function=function-config&sid=" + data.sid, "_blank");
+				});
+			}
+		});
+	}
+	
+	window.onload = function() {
+		config();
+	}
+</script>

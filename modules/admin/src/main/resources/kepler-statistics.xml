@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<bean id="kepler.admin.method" class="com.kepler.admin.statistics.method.impl.MethodInvokerServiceImpl">
+		<constructor-arg ref="kepler.mongo.config.transfer.day" />
+		<constructor-arg ref="kepler.mongo.config.transfer.hour" />
+		<constructor-arg ref="kepler.mongo.config.transfer.minute" />
+		<constructor-arg ref="kepler.admin.resource.instance" />
+	</bean>
+
+	<bean id="kepler.admin.chart.bar" class="com.kepler.admin.statistics.barchart.impl.BarChartServiceImpl">
+		<constructor-arg ref="kepler.mongo.config.transfer.day" />
+		<constructor-arg ref="kepler.mongo.config.transfer.hour" />
+		<constructor-arg ref="kepler.mongo.config.transfer.minute" />
+		<constructor-arg ref="kepler.admin.resource.terminal" />
+	</bean>
+
+	<bean id="kepler.admin.status" class="com.kepler.admin.statistics.chart.impl.StatusServiceImpl">
+		<constructor-arg ref="kepler.mongo.config.status" />
+		<constructor-arg ref="kepler.admin.finder.terminal" />
+	</bean>
+
+	<bean id="kepler.admin.chart" class="com.kepler.admin.statistics.chart.impl.ChartServiceImpl">
+		<constructor-arg ref="kepler.mongo.config.transfer.day" />
+		<constructor-arg ref="kepler.mongo.config.transfer.hour" />
+		<constructor-arg ref="kepler.mongo.config.transfer.minute" />
+	</bean>
+
+</beans>

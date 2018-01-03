@@ -1,0 +1,89 @@
+<script src="../assets/js/jquery.blockUI.js"></script>
+<script src="../assets/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+<script src="../assets/js/locales/bootstrap-datetimepicker.fr.js" charset="UTF-8"></script>
+<script src="../assets/js/chart/highcharts.js"></script>
+<script src="../assets/js/chart/modules/exporting.js"></script>
+<script src="function-chart-js-theme.js"></script>
+<script src="function-chart-status-js-build.js"></script>
+<script>
+	$("#navigation").html("主机状态");
+	//收起左侧菜单
+	
+	var fields = ['memory-max', 'memory-used', 'thread-active-jvm', 'thread-active-kepler', 'traffic-input', 'traffic-output', 'quality-waiting', 'quality-breaking', 'quality-demoting', 'gc-1', 'gc-2'];
+	
+	//加载主机状态	
+	function loadStatus() {
+		$.blockUI({message:'<h4>加载中...</h4>' });
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/chart/status?sid=" + param("sid") + "&start=" + $("#time_start").val() + "&end=" + $("#time_end").val(),
+			success : function callback(data) {
+				// 内存图表
+				if($("#memory-max").highcharts() == null){
+					//内存
+					var max = buildChart("最大堆内存", "最大堆内存", "MB", data.memoryMax.data);
+					var used = buildChart("已用堆内存", "已用堆内存", "MB", data.memoryUsed.data);
+					//线程
+					var threadJvm = buildChart("活跃线程数量-JVM", "活跃线程数量-JVM", "JVM", data.threadJvm.data);
+					var threadFramework = buildChart("活跃线程数量-框架", "活跃线程数量-框架", "框架", data.threadFramework.data);
+					//流量
+					var trafficInput = buildChart("入站流量", "入站流量", "Byte", data.trafficInput.data);
+					var trafficOutput = buildChart("出站流量", "出站流量", "Byte", data.trafficOutput.data);
+					//质量
+					var qualityWaiting = buildChart("请求等待", "请求等待", "等待", data.qualityWaiting.data);
+					var qualityBreaking = buildChart("连接熔断", "连接熔断", "熔断", data.qualityBreaking.data);
+					var qualityDemoting = buildChart("服务降级", "服务降级", "降级", data.qualityDemoting.data);
+					// GC(YGc/FGc)
+					var gc = new Array();
+					for(var index = 0; index < data.gc.length; index++){
+						var title = "垃圾收集耗时 [" + data.gc[index].title + "]";
+						gc[index] = buildChart(title, title, "ms", data.gc[index].data);
+					}
+					//首次初始化
+					draw([max, used, threadJvm, threadFramework, trafficInput, trafficOutput, qualityWaiting, qualityBreaking, qualityDemoting].concat(gc), fields);
+				}else{
+					var gc4redraw = new Array();
+					for(var index = 0; index < data.gc.length; index++){
+						gc4redraw[index] = data.gc[index].data;
+					}
+					//重绘
+					redraw([data.memoryMax.data, data.memoryUsed.data, data.threadJvm.data, data.threadFramework.data, data.trafficInput.data, data.trafficOutput.data, data.qualityWaiting.data, data.qualityBreaking.data, data.qualityDemoting.data].concat(gc4redraw), fields);
+				}
+				$("#chart_status_title").html(param("sid"));
+				$.unblockUI();
+			}
+		});
+	}
+	
+	function redraw(data, canvas){
+		$(data).each(function(index, element){
+			$("#" + canvas[index]).highcharts().series[0].setData(element);
+		});
+	}
+	
+	function draw(data, canvas) {
+		$(data).each(function(index, element){
+			$("#" + canvas[index]).highcharts(element);
+		});
+	}
+	
+	//切换时间段时重绘
+	$("#search").click(function() {
+		loadStatus();
+	});
+	
+	$(".form_datetime").datetimepicker({
+		weekStart: 1,
+		todayBtn: 1,
+		autoclose: 1,
+		startView: 2,
+		forceParse: 0,
+		showMeridian: 1,
+		todayHighlight: 1
+	});
+	
+	window.onload = function() {
+		loadStatus();
+		window.setInterval(loadStatus, 20000);   
+	}
+</script>

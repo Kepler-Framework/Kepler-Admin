@@ -1,0 +1,180 @@
+<script src="../assets/js/jquery.blockUI.js"></script>
+<script src="../assets/js/chart/highcharts.js"></script>
+<script src="../assets/js/chart/modules/exporting.js"></script>
+<script src="function-chart-js-theme.js"></script>
+<script src="function-chart-js-build.js"></script>
+<script>
+	//收起左侧菜单
+	$("#sidebar-collapse").click();
+	//更新导航
+	$("#navigation").html("服务管理");
+	//更新服务标识
+	$("#chart_overview_title").html(param("service") + " / " + param("versionAndCatalog"));
+	//更新右侧Select时间框(分钟/240, 小时/24, 天/7)
+	$("#nav-search").empty();
+	$("#nav-search").append("单位:<select class=\"nav-search-input\" id=\"period\" style=\"width:100px; height:30px\"><option value=\"240\">MINUTE</option><option value=\"24\">HOUR</option><option value=\"30\">DAY</option></select>偏移:<input type=\"number\" class=\"nav-search-input\" id=\"period_offset\" style=\"width:75px;\"/>范围:<input type=\"number\" class=\"nav-search-input\" id=\"period_length\" style=\"width:75px;\"/>");
+	//主机统计模板, 并重置
+	var instance_template = $("#chart_instances").html();
+	$("#chart_instances").empty();
+	//METHOD统计模板	
+	var methods_template_service = "<tr><td>${name}</td><td>${total}</td><td>${timeout}</td><td>${exception}</td><td>${rtt}(ms)</td><td>${max}(ms)</td><td><button id=\"statics4clients_${id}\" data-toggle=\"dropdown\" class=\"btn btn-primary btn-xs fa fa-bar-chart\"></button></td></tr>";
+	var methods_template_instance = "<tr><td>${name}</td><td>${total}</td><td>${timeout}</td><td>${exception}</td><td>${rtt}(ms)</td><td>${max}(ms)</td></tr>";
+	//加载所有服务聚合统计	
+	function loadService() {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/chart/service?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&offset=" + period_offset() + "&length=" + period_length() + "&period=" + $("#period").find('option:selected').text(),
+			success : function callback(data) {
+				//初始化
+				if($("#service-total").highcharts() == null){
+					//转换数据
+					var elapse = buildElapse("耗时", $("#period").find('option:selected').text(), data.elapse.type, data.elapse.data);
+					var total = buildTotal("访问量", $("#period").find('option:selected').text(), data.total.type, data.total.data);
+					var error = buildError("错误", $("#period").find('option:selected').text(), data.error.type, data.error.data);
+					//生成图表
+					draw([total, error, elapse], ['service-total', 'service-error', 'service-elapse']);
+				}else{
+					//刷新图表
+					redraw([data.total.data, data.error.data, data.elapse.data], ['service-total', 'service-error', 'service-elapse']);
+				}
+				//加载服务Method
+				methods4service();
+			}
+		});
+	}
+	//加载指定服务所有主机
+	function loadInstances(){
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/finder/instances/service4version?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog"),
+			success : function callback(data) {
+				$(data).each(function(index, element){
+					//获取服务对应主机集合
+					loadInstance(element.sid, element.host, index);
+				});
+			}
+		});
+	}
+	//获取服务对应主机集合
+	function loadInstance(sid, host, index) {
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/chart/instance?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&sid=" + sid + "&offset=" + period_offset() + "&length=" + period_length() + "&period=" + $("#period").find('option:selected').text(),
+			success : function callback(data) {
+				if($("#" + sid + "-total").highcharts() == null){
+					//转换数据
+					var elapse = buildElapse("耗时", $("#period").find('option:selected').text(), data.elapse.type, data.elapse.data);
+					var total = buildTotal("访问量", $("#period").find('option:selected').text(), data.total.type, data.total.data);
+					var error = buildError("错误", $("#period").find('option:selected').text(), data.error.type, data.error.data);
+					//加载Host统计
+					$("#chart_instances").append(instance_template.replaceAll("#{sid}", sid).replaceAll("#{instance}", sid).replaceAll("#{host}", "Host: " + host));
+					//绑定Host右侧依赖/状态/设置按钮
+					$("#dependency_" + sid).click(function(){
+						window.open("/?function=function-dependency-imported&sid=" + sid, "_blank");
+					});
+					$("#status_" + sid).click(function(){
+						window.open("/?function=function-status&host=" + host + "&sid=" + sid, "_blank");
+					});
+					$("#setting_" + sid).click(function(){
+						window.open("/?function=function-management-detail&service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&sid=" + sid, "_blank");
+					});
+					//生成图表
+					draw([total, error, elapse], [sid + '-total', sid + '-error', sid + '-elapse']);
+				}else{
+					//刷新图表
+					redraw([data.total.data, data.error.data, data.elapse.data], [sid + '-total', sid + '-error', sid + '-elapse']);
+				}
+				//加载Host.Method
+				methods4Instance(sid);
+			}
+		});
+	}
+	//加载Host.Method
+	function methods4Instance(sid){
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/methods/instance?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&period=" +  $("#period").find('option:selected').text() + "&sid=" + sid + "&offset=" + period_offset() + "&length=" + period_length(),
+			success : function callback(data) {
+				$("#method-tab_tbody_"+sid).empty();
+				$(data).each(function(index, element){
+					$("#method-tab_tbody_"+sid).append(methods_template_instance.replace("${name}", element.name).replace("${total}", element.total).replace("${timeout}", element.timeout).replace("${exception}", element.exception).replace("${rtt}", element.rtt).replace("${max}", element.max));
+				});
+			}
+		});
+	}
+	//加载服务Method
+	function methods4service(){
+		jQuery.ajax({
+			type : "GET",
+			url : "/api/methods/service?service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&period=" +  $("#period").find('option:selected').text() + "&offset=" + period_offset() + "&length=" + period_length(),
+			success : function callback(data) {
+				$("#method-tab_tbody_service").empty();
+				$(data).each(function(index, element){
+					$("#method-tab_tbody_service").append(methods_template_service.replace("${name}", element.name).replace("${total}", element.total).replace("${timeout}", element.timeout).replace("${exception}", element.exception).replace("${rtt}", element.rtt).replace("${max}", element.max).replace("${id}", element.name));
+					$("#statics4clients_" + element.name).click(function() {
+						window.open("/?function=function-barchart-statistics4clients&service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog") + "&method=" + element.name + "&period=" + $("#period").find('option:selected').text() + "&offset=" + period_offset() + "&length=" + period_length(), "_blank");
+					});
+				});
+				// 任意数据完毕触发解锁
+				$.unblockUI();
+			}
+		});
+	}
+	
+	function redraw(data, canvas){
+		$(data).each(function(index, element){
+			$("#" + canvas[index]).highcharts().series[0].setData(element);
+		});
+	}
+	
+	function draw(data, canvas) {
+		$(data).each(function(index, element){
+			$("#" + canvas[index]).highcharts(element);
+		});
+	}
+	
+	function period_offset() {
+		// 如果period_offset不为空则使用此值, 否则使用默认值
+		var period_def = $("#period").val();
+		var period_offset = $("#period_offset").val();
+		return period_offset != "" ? period_offset : period_def;
+	}
+	
+	function period_length() {
+		// 如果period_length不为空则使用此值, 否则使用最大值
+		var period_length = $("#period_length").val();
+		return period_length != "" ? period_length : Math.pow(2, 16);
+	}
+	
+	function refresh() {
+		$.blockUI({message:'<h4>加载中...</h4>' });
+		loadService();
+		loadInstances();
+	}
+	
+	//右侧Select时间框切换后刷新图表
+	$("#period").change(function() {
+		refresh();
+	});
+	
+	$("#period_offset").change(function() {
+		refresh();
+	});
+	
+	$("#period_length").change(function() {
+		refresh();
+	});
+	
+	//绑定服务右侧依赖/状态/设置按钮
+	$("#dependency").click(function(){
+		window.open("/?function=function-dependency-exported&service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog"), "_blank");
+	});
+	$("#setting").click(function(){
+		window.open("/?function=function-management-overview&service=" + param("service") + "&versionAndCatalog=" + param("versionAndCatalog"), "_blank");
+	});
+	
+	window.onload = function() {
+		refresh();
+		window.setInterval(refresh, 20000);   
+	}
+</script>
